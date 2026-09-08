@@ -1,0 +1,78 @@
+@startuml Sistema_de_Matriculas_Caso_de_Uso
+left to right direction
+skinparam packageStyle rectangle
+skinparam actorStyle awesome
+
+actor Aluno
+actor Professor
+actor Secretaria
+actor "Sistema de\nCobranças" as Cobrancas
+
+rectangle "Sistema de Matrículas" {
+
+  usecase "Efetuar Login\n(validar senha)" as UC01
+
+  usecase "Consultar Disciplinas\nOfertadas" as UC02
+  usecase "Matricular-se em Disciplina\nObrigatória (1ª opção, até 4)" as UC03
+  usecase "Matricular-se em Disciplina\nOptativa (até 2)" as UC04
+  usecase "Cancelar Matrícula\nem Disciplina" as UC05
+  usecase "Consultar Matrículas\nRealizadas" as UC06
+
+  usecase "Consultar Alunos Matriculados\nem Disciplina" as UC07
+
+  usecase "Gerenciar Currículo\ndo Semestre" as UC08
+  usecase "Gerenciar Cursos" as UC09
+  usecase "Gerenciar Disciplinas" as UC10
+  usecase "Gerenciar Professores" as UC11
+  usecase "Gerenciar Alunos" as UC12
+  usecase "Definir Período\nde Matrículas" as UC13
+  usecase "Processar Encerramento do\nPeríodo de Matrículas" as UC14
+
+  usecase "Notificar Sistema\nde Cobranças" as UC15
+  usecase "Ativar Disciplina\n(>= 3 matriculados)" as UC16
+  usecase "Cancelar Disciplina\n(< 3 matriculados)" as UC17
+}
+
+' --- Aluno ---
+Aluno --> UC02
+Aluno --> UC03
+Aluno --> UC04
+Aluno --> UC05
+Aluno --> UC06
+
+' --- Professor ---
+Professor --> UC07
+
+' --- Secretaria ---
+Secretaria --> UC08
+Secretaria --> UC09
+Secretaria --> UC10
+Secretaria --> UC11
+Secretaria --> UC12
+Secretaria --> UC13
+
+' --- Login obrigatório para todo caso de uso iniciado por um ator primário ---
+UC02 .> UC01 : <<include>>
+UC03 .> UC01 : <<include>>
+UC04 .> UC01 : <<include>>
+UC05 .> UC01 : <<include>>
+UC06 .> UC01 : <<include>>
+UC07 .> UC01 : <<include>>
+UC08 .> UC01 : <<include>>
+UC09 .> UC01 : <<include>>
+UC10 .> UC01 : <<include>>
+UC11 .> UC01 : <<include>>
+UC12 .> UC01 : <<include>>
+UC13 .> UC01 : <<include>>
+
+' --- Regras de negócio da matrícula ---
+UC03 .> UC15 : <<include>>
+UC04 .> UC15 : <<include>>
+UC15 --> Cobrancas
+
+' --- Encerramento automático do período (disparado pelo sistema/Secretaria) ---
+UC14 .> UC16 : <<extend>>
+UC14 .> UC17 : <<extend>>
+Secretaria --> UC14
+
+@enduml
