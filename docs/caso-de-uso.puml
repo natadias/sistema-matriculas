@@ -70,9 +70,9 @@ UC03 .> UC15 : <<include>>
 UC04 .> UC15 : <<include>>
 UC15 --> Cobrancas
 
-' --- Encerramento automático do período (disparado pelo sistema/Secretaria) ---
+' --- Encerramento automático do período (disparado pelo fechamento do período pela Secretaria) ---
+UC13 .> UC14 : <<include>>
 UC14 .> UC16 : <<extend>>
 UC14 .> UC17 : <<extend>>
-Secretaria --> UC14
 
 @enduml

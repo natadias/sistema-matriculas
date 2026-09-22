@@ -29,6 +29,18 @@ Fonte editável (PlantUML): [`docs/caso-de-uso.puml`](docs/caso-de-uso.puml).
 **Atores:** Aluno, Professor, Secretaria e Sistema de Cobranças (sistema externo, notificado após
 uma matrícula).
 
+## Diagrama de Classes
+
+![Diagrama de Classes do Sistema de Matrículas](docs/diagrama-classes.png)
+
+Fonte editável (PlantUML): [`docs/diagrama-classes.puml`](docs/diagrama-classes.puml).
+
+O diagrama modela o pacote `modelo` (entidades de domínio — `Usuario` e suas especializações
+`Aluno`, `Professor` e `FuncionarioSecretaria`, além de `Curso`, `Disciplina`, `Curriculo`,
+`PeriodoMatricula` e `Matricula`) e o pacote `servico`, com a fachada `SistemaMatriculas`
+concentrando as operações dos casos de uso e a interface `SistemaCobrancas` representando o
+sistema externo de cobranças.
+
 ## Histórias de Usuário
 
 ### Autenticação
@@ -137,4 +149,21 @@ uma matrícula).
 
 - [ ] Disciplinas com 3 ou mais alunos matriculados são marcadas como ativas.
 - [ ] Disciplinas com menos de 3 alunos matriculados são canceladas.
+
+## Projeto Java
+
+```
+src/main/java/br/edu/matriculas/
+├── Main.java                     # ponto de entrada
+├── modelo/                       # entidades de domínio (Usuario, Aluno, Professor, Curso, ...)
+└── servico/                      # SistemaMatriculas (fachada dos casos de uso) e SistemaCobrancas
+```
+
+Compilar o projeto:
+
+```
+mvn compile
+```
+
+Requisitos: Java 17+ e Maven.
 

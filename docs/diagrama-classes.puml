@@ -1,0 +1,140 @@
+@startuml Sistema_de_Matriculas_Diagrama_de_Classes
+skinparam classAttributeIconSize 0
+hide enum methods
+
+package "modelo" {
+
+  abstract class Usuario {
+    # nome: String
+    # login: String
+    # senha: String
+    + autenticar(senha: String): boolean
+  }
+
+  class Aluno extends Usuario {
+    - matricula: String
+    - curso: Curso
+    - matriculas: List<Matricula>
+    + getMatriculasAtivas(): List<Matricula>
+  }
+
+  class Professor extends Usuario {
+    - registroFuncional: String
+    - disciplinasLecionadas: List<Disciplina>
+  }
+
+  class FuncionarioSecretaria extends Usuario {
+    - registro: String
+  }
+
+  class Curso {
+    - nome: String
+    - numeroCreditos: int
+    - disciplinas: List<Disciplina>
+  }
+
+  class Disciplina {
+    - codigo: String
+    - nome: String
+    - creditos: int
+    - professor: Professor
+    - status: StatusDisciplina
+    - matriculas: List<Matricula>
+    + {static} CAPACIDADE_MAXIMA: int = 60
+    + {static} MINIMO_PARA_ATIVAR: int = 3
+    + temVagasDisponiveis(): boolean
+    + getNumeroDeMatriculados(): int
+  }
+
+  class Curriculo {
+    - semestre: String
+    - curso: Curso
+    - disciplinas: List<Disciplina>
+  }
+
+  class PeriodoMatricula {
+    - semestre: String
+    - dataInicio: LocalDate
+    - dataFim: LocalDate
+    - aberto: boolean
+  }
+
+  class Matricula {
+    - aluno: Aluno
+    - disciplina: Disciplina
+    - tipo: TipoMatricula
+    - dataMatricula: LocalDate
+    - status: StatusMatricula
+    + cancelar(): void
+  }
+
+  enum TipoMatricula {
+    OBRIGATORIA
+    OPTATIVA
+  }
+
+  enum StatusMatricula {
+    ATIVA
+    CANCELADA
+  }
+
+  enum StatusDisciplina {
+    PENDENTE
+    ATIVA
+    CANCELADA
+  }
+}
+
+package "servico" {
+
+  class SistemaMatriculas {
+    - alunos: List<Aluno>
+    - professores: List<Professor>
+    - funcionarios: List<FuncionarioSecretaria>
+    - cursos: List<Curso>
+    - disciplinas: List<Disciplina>
+    - curriculos: List<Curriculo>
+    - sistemaCobrancas: SistemaCobrancas
+    + autenticar(login: String, senha: String): Usuario
+    + consultarDisciplinasOfertadas(semestre: String): List<Disciplina>
+    + matricular(aluno: Aluno, disciplina: Disciplina, tipo: TipoMatricula): Matricula
+    + cancelarMatricula(aluno: Aluno, disciplina: Disciplina): void
+    + consultarMatriculas(aluno: Aluno): List<Matricula>
+    + consultarAlunosMatriculados(disciplina: Disciplina): List<Aluno>
+    + cadastrarCurso(curso: Curso): void
+    + cadastrarDisciplina(disciplina: Disciplina): void
+    + cadastrarProfessor(professor: Professor): void
+    + cadastrarAluno(aluno: Aluno): void
+    + definirCurriculo(curriculo: Curriculo): void
+    + abrirPeriodoMatricula(periodo: PeriodoMatricula): void
+    + encerrarPeriodoMatricula(periodo: PeriodoMatricula): void
+    - processarEncerramentoPeriodo(periodo: PeriodoMatricula): void
+  }
+
+  interface SistemaCobrancas {
+    + notificarMatricula(aluno: Aluno, disciplina: Disciplina): void
+  }
+
+  class SistemaCobrancasImpl implements SistemaCobrancas
+}
+
+SistemaMatriculas "1" o-- "*" Aluno
+SistemaMatriculas "1" o-- "*" Professor
+SistemaMatriculas "1" o-- "*" FuncionarioSecretaria
+SistemaMatriculas "1" o-- "*" Curso
+SistemaMatriculas "1" o-- "*" Disciplina
+SistemaMatriculas "1" o-- "*" Curriculo
+SistemaMatriculas --> SistemaCobrancas
+
+Curso "1" *-- "*" Disciplina
+Curriculo "1" -- "1" Curso
+Curriculo "1" o-- "*" Disciplina
+Professor "1" -- "*" Disciplina : leciona
+Disciplina "1" *-- "*" Matricula
+Aluno "1" *-- "*" Matricula
+Matricula "*" -- "1" Disciplina
+Matricula --> TipoMatricula
+Matricula --> StatusMatricula
+Disciplina --> StatusDisciplina
+
+@enduml
