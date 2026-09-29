@@ -13,27 +13,18 @@ public abstract class Usuario {
     }
 
     public boolean autenticar(String senha) {
-        // TODO: implementar validação de senha
-        throw new UnsupportedOperationException("TODO");
+        return this.senha != null && this.senha.equals(senha);
     }
 
     public String getNome() {
         return nome;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
     public String getLogin() {
         return login;
     }
 
-    public void setLogin(String login) {
-        this.login = login;
-    }
-
-    public void setSenha(String senha) {
-        this.senha = senha;
+    public String getSenha() {
+        return senha;
     }
 }

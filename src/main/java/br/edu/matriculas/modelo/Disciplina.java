@@ -11,25 +11,31 @@ public class Disciplina {
     private String codigo;
     private String nome;
     private int creditos;
+    private Curso curso;
     private Professor professor;
     private StatusDisciplina status = StatusDisciplina.PENDENTE;
     private List<Matricula> matriculas = new ArrayList<>();
 
-    public Disciplina(String codigo, String nome, int creditos, Professor professor) {
+    public Disciplina(String codigo, String nome, int creditos, Curso curso, Professor professor) {
         this.codigo = codigo;
         this.nome = nome;
         this.creditos = creditos;
+        this.curso = curso;
         this.professor = professor;
     }
 
     public boolean temVagasDisponiveis() {
-        // TODO: comparar getNumeroDeMatriculados() com CAPACIDADE_MAXIMA
-        throw new UnsupportedOperationException("TODO");
+        return getNumeroDeMatriculados() < CAPACIDADE_MAXIMA;
     }
 
     public int getNumeroDeMatriculados() {
-        // TODO: contar matriculas com StatusMatricula.ATIVA
-        throw new UnsupportedOperationException("TODO");
+        int total = 0;
+        for (Matricula matricula : matriculas) {
+            if (matricula.getStatus() == StatusMatricula.ATIVA) {
+                total++;
+            }
+        }
+        return total;
     }
 
     public String getCodigo() {
@@ -44,23 +50,33 @@ public class Disciplina {
         return creditos;
     }
 
-    public Professor getProfessor() {
-        return professor;
+    public Curso getCurso() {
+        return curso;
     }
 
-    public void setProfessor(Professor professor) {
-        this.professor = professor;
+    public Professor getProfessor() {
+        return professor;
     }
 
     public StatusDisciplina getStatus() {
         return status;
     }
 
-    public void setStatus(StatusDisciplina status) {
-        this.status = status;
+    public void ativar() {
+        this.status = StatusDisciplina.ATIVA;
+    }
+
+    public void cancelar() {
+        this.status = StatusDisciplina.CANCELADA;
     }
 
     public List<Matricula> getMatriculas() {
         return matriculas;
+    }
+
+    @Override
+    public String toString() {
+        return codigo + " - " + nome + " (" + creditos + " créditos, " + status + ", "
+                + getNumeroDeMatriculados() + "/" + CAPACIDADE_MAXIMA + " matriculados)";
     }
 }

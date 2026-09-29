@@ -16,8 +16,13 @@ public class Aluno extends Usuario {
     }
 
     public List<Matricula> getMatriculasAtivas() {
-        // TODO: filtrar matriculas por StatusMatricula.ATIVA
-        throw new UnsupportedOperationException("TODO");
+        List<Matricula> ativas = new ArrayList<>();
+        for (Matricula matricula : matriculas) {
+            if (matricula.getStatus() == StatusMatricula.ATIVA) {
+                ativas.add(matricula);
+            }
+        }
+        return ativas;
     }
 
     public String getMatricula() {
@@ -28,11 +33,12 @@ public class Aluno extends Usuario {
         return curso;
     }
 
-    public void setCurso(Curso curso) {
-        this.curso = curso;
-    }
-
     public List<Matricula> getMatriculas() {
         return matriculas;
+    }
+
+    @Override
+    public String toString() {
+        return matricula + " - " + nome + " (" + curso.getNome() + ")";
     }
 }

@@ -7,7 +7,7 @@ public class SistemaCobrancasImpl implements SistemaCobrancas {
 
     @Override
     public void notificarMatricula(Aluno aluno, Disciplina disciplina) {
-        // TODO: integrar com o sistema de cobranças real (fora do escopo)
-        throw new UnsupportedOperationException("TODO");
+        System.out.println("[Sistema de Cobranças] " + aluno.getNome() + " (" + aluno.getMatricula()
+                + ") será cobrado pela disciplina " + disciplina.getCodigo() + " - " + disciplina.getNome());
     }
 }

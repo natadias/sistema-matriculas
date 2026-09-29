@@ -1,7 +1,10 @@
 package br.edu.matriculas.servico;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Set;
 
 import br.edu.matriculas.modelo.Aluno;
 import br.edu.matriculas.modelo.Curriculo;
@@ -11,10 +14,14 @@ import br.edu.matriculas.modelo.FuncionarioSecretaria;
 import br.edu.matriculas.modelo.Matricula;
 import br.edu.matriculas.modelo.PeriodoMatricula;
 import br.edu.matriculas.modelo.Professor;
+import br.edu.matriculas.modelo.StatusMatricula;
 import br.edu.matriculas.modelo.TipoMatricula;
 import br.edu.matriculas.modelo.Usuario;
 
 public class SistemaMatriculas {
+
+    public static final int MAXIMO_OBRIGATORIAS = 4;
+    public static final int MAXIMO_OPTATIVAS = 2;
 
     private List<Aluno> alunos = new ArrayList<>();
     private List<Professor> professores = new ArrayList<>();
@@ -22,98 +29,146 @@ public class SistemaMatriculas {
     private List<Curso> cursos = new ArrayList<>();
     private List<Disciplina> disciplinas = new ArrayList<>();
     private List<Curriculo> curriculos = new ArrayList<>();
+    private List<PeriodoMatricula> periodos = new ArrayList<>();
+    private PeriodoMatricula periodoAtual;
     private SistemaCobrancas sistemaCobrancas;
 
     public SistemaMatriculas(SistemaCobrancas sistemaCobrancas) {
         this.sistemaCobrancas = sistemaCobrancas;
     }
 
-    /** US01 - Login. */
     public Usuario autenticar(String login, String senha) {
-        // TODO: localizar usuário por login e validar senha
-        throw new UnsupportedOperationException("TODO");
+        for (Usuario usuario : todosOsUsuarios()) {
+            if (usuario.getLogin().equals(login)) {
+                return usuario.autenticar(senha) ? usuario : null;
+            }
+        }
+        return null;
     }
 
-    /** US02 - Consultar disciplinas ofertadas no currículo de um semestre. */
+    private List<Usuario> todosOsUsuarios() {
+        List<Usuario> todos = new ArrayList<>();
+        todos.addAll(alunos);
+        todos.addAll(professores);
+        todos.addAll(funcionarios);
+        return todos;
+    }
+
     public List<Disciplina> consultarDisciplinasOfertadas(String semestre) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        Set<Disciplina> ofertadas = new LinkedHashSet<>();
+        for (Curriculo curriculo : curriculos) {
+            if (curriculo.getSemestre().equals(semestre)) {
+                ofertadas.addAll(curriculo.getDisciplinas());
+            }
+        }
+        return new ArrayList<>(ofertadas);
     }
 
-    /** US03/US04 - Matricular aluno em disciplina obrigatória ou optativa. */
     public Matricula matricular(Aluno aluno, Disciplina disciplina, TipoMatricula tipo) {
-        // TODO: validar período aberto, limites (4 obrigatórias / 2 optativas), vagas (60) e
-        // notificar sistemaCobrancas.notificarMatricula(...)
-        throw new UnsupportedOperationException("TODO");
+        if (periodoAtual == null || !periodoAtual.isAberto()) {
+            throw new IllegalStateException("Não há período de matrículas aberto.");
+        }
+        for (Matricula matricula : aluno.getMatriculasAtivas()) {
+            if (matricula.getDisciplina() == disciplina) {
+                throw new IllegalStateException("Aluno já está matriculado nesta disciplina.");
+            }
+        }
+        int matriculadasDoTipo = 0;
+        for (Matricula matricula : aluno.getMatriculasAtivas()) {
+            if (matricula.getTipo() == tipo) {
+                matriculadasDoTipo++;
+            }
+        }
+        int limite = tipo == TipoMatricula.OBRIGATORIA ? MAXIMO_OBRIGATORIAS : MAXIMO_OPTATIVAS;
+        if (matriculadasDoTipo >= limite) {
+            throw new IllegalStateException(
+                    "Limite de " + limite + " disciplinas " + tipo.name().toLowerCase() + "(s) já atingido.");
+        }
+        if (!disciplina.temVagasDisponiveis()) {
+            throw new IllegalStateException("Disciplina sem vagas disponíveis.");
+        }
+
+        Matricula matricula = new Matricula(aluno, disciplina, tipo, LocalDate.now());
+        aluno.getMatriculas().add(matricula);
+        disciplina.getMatriculas().add(matricula);
+        sistemaCobrancas.notificarMatricula(aluno, disciplina);
+        return matricula;
     }
 
-    /** US05 - Cancelar matrícula em disciplina. */
     public void cancelarMatricula(Aluno aluno, Disciplina disciplina) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        if (periodoAtual == null || !periodoAtual.isAberto()) {
+            throw new IllegalStateException("Não há período de matrículas aberto.");
+        }
+        for (Matricula matricula : aluno.getMatriculasAtivas()) {
+            if (matricula.getDisciplina() == disciplina) {
+                matricula.cancelar();
+                return;
+            }
+        }
+        throw new IllegalStateException("Aluno não está matriculado nesta disciplina.");
     }
 
-    /** US06 - Consultar matrículas realizadas por um aluno. */
     public List<Matricula> consultarMatriculas(Aluno aluno) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        return aluno.getMatriculasAtivas();
     }
 
-    /** US07 - Consultar alunos matriculados em uma disciplina. */
     public List<Aluno> consultarAlunosMatriculados(Disciplina disciplina) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        List<Aluno> matriculados = new ArrayList<>();
+        for (Matricula matricula : disciplina.getMatriculas()) {
+            if (matricula.getStatus() == StatusMatricula.ATIVA) {
+                matriculados.add(matricula.getAluno());
+            }
+        }
+        return matriculados;
     }
 
-    /** US09 - Cadastrar curso. */
     public void cadastrarCurso(Curso curso) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        cursos.add(curso);
     }
 
-    /** US10 - Cadastrar disciplina. */
     public void cadastrarDisciplina(Disciplina disciplina) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        disciplinas.add(disciplina);
+        disciplina.getCurso().getDisciplinas().add(disciplina);
+        disciplina.getProfessor().getDisciplinasLecionadas().add(disciplina);
     }
 
-    /** US11 - Cadastrar professor. */
     public void cadastrarProfessor(Professor professor) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        professores.add(professor);
     }
 
-    /** US12 - Cadastrar aluno. */
     public void cadastrarAluno(Aluno aluno) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        alunos.add(aluno);
     }
 
-    /** US08 - Definir currículo de um semestre. */
+    public void cadastrarFuncionario(FuncionarioSecretaria funcionario) {
+        funcionarios.add(funcionario);
+    }
+
     public void definirCurriculo(Curriculo curriculo) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        curriculos.add(curriculo);
     }
 
-    /** US13 - Abrir período de matrículas. */
     public void abrirPeriodoMatricula(PeriodoMatricula periodo) {
-        // TODO
-        throw new UnsupportedOperationException("TODO");
+        periodo.abrir();
+        this.periodoAtual = periodo;
+        if (!periodos.contains(periodo)) {
+            periodos.add(periodo);
+        }
     }
 
-    /** US13 - Encerrar período de matrículas (dispara o processamento de encerramento, US14). */
     public void encerrarPeriodoMatricula(PeriodoMatricula periodo) {
-        // TODO: encerrar e chamar processarEncerramentoPeriodo(periodo)
-        throw new UnsupportedOperationException("TODO");
+        periodo.encerrar();
+        processarEncerramentoPeriodo(periodo);
     }
 
-    /**
-     * US14 - Ativa disciplinas com pelo menos MINIMO_PARA_ATIVAR matriculados e cancela as demais.
-     */
     private void processarEncerramentoPeriodo(PeriodoMatricula periodo) {
-        // TODO: percorrer disciplinas do período e aplicar a regra de ativação/cancelamento
-        // (Disciplina.MINIMO_PARA_ATIVAR)
-        throw new UnsupportedOperationException("TODO");
+        for (Disciplina disciplina : consultarDisciplinasOfertadas(periodo.getSemestre())) {
+            if (disciplina.getNumeroDeMatriculados() >= Disciplina.MINIMO_PARA_ATIVAR) {
+                disciplina.ativar();
+            } else {
+                disciplina.cancelar();
+            }
+        }
     }
 
     public List<Aluno> getAlunos() {
@@ -138,5 +193,13 @@ public class SistemaMatriculas {
 
     public List<Curriculo> getCurriculos() {
         return curriculos;
+    }
+
+    public PeriodoMatricula getPeriodoAtual() {
+        return periodoAtual;
+    }
+
+    public List<PeriodoMatricula> getPeriodos() {
+        return periodos;
     }
 }

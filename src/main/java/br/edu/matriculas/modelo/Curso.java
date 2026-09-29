@@ -18,19 +18,16 @@ public class Curso {
         return nome;
     }
 
-    public void setNome(String nome) {
-        this.nome = nome;
-    }
-
     public int getNumeroCreditos() {
         return numeroCreditos;
     }
 
-    public void setNumeroCreditos(int numeroCreditos) {
-        this.numeroCreditos = numeroCreditos;
-    }
-
     public List<Disciplina> getDisciplinas() {
         return disciplinas;
+    }
+
+    @Override
+    public String toString() {
+        return nome + " (" + numeroCreditos + " créditos)";
     }
 }

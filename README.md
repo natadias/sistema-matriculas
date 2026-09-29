@@ -29,6 +29,12 @@ Fonte editável (PlantUML): [`docs/caso-de-uso.puml`](docs/caso-de-uso.puml).
 **Atores:** Aluno, Professor, Secretaria e Sistema de Cobranças (sistema externo, notificado após
 uma matrícula).
 
+> **Correção (revisão código↔diagramas):** adicionado o caso de uso "Cadastrar Funcionário da
+> Secretaria" — o método `cadastrarFuncionario(...)` já existia na fachada `SistemaMatriculas` (e
+> no diagrama de classes) para permitir a recarga de dados persistidos, mas não tinha um caso de
+> uso correspondente nem opção no menu; agora a Secretaria também pode cadastrar novos funcionários
+> pela CLI (US15).
+
 ## Diagrama de Classes
 
 ![Diagrama de Classes do Sistema de Matrículas](docs/diagrama-classes.png)
@@ -37,9 +43,27 @@ Fonte editável (PlantUML): [`docs/diagrama-classes.puml`](docs/diagrama-classes
 
 O diagrama modela o pacote `modelo` (entidades de domínio — `Usuario` e suas especializações
 `Aluno`, `Professor` e `FuncionarioSecretaria`, além de `Curso`, `Disciplina`, `Curriculo`,
-`PeriodoMatricula` e `Matricula`) e o pacote `servico`, com a fachada `SistemaMatriculas`
+`PeriodoMatricula` e `Matricula`), o pacote `servico`, com a fachada `SistemaMatriculas`
 concentrando as operações dos casos de uso e a interface `SistemaCobrancas` representando o
-sistema externo de cobranças.
+sistema externo de cobranças, e o pacote `persistencia`, com `RepositorioDados` responsável por
+salvar/carregar o estado do sistema em arquivo.
+
+> **Correção:** `Disciplina` ganhou a referência que faltava para `Curso` (a relação já
+> existia no diagrama — `Curso "1" *-- "*" Disciplina` — mas não estava implementada na classe);
+> `SistemaMatriculas` ganhou `cadastrarFuncionario(...)`, o histórico de `periodos` e o
+> `periodoAtual` usado para validar se as matrículas podem ocorrer; e foi adicionado o pacote
+> `persistencia` (classe `RepositorioDados`), que não existia nos diagramas anteriores.
+>
+> **Correção (revisão código↔diagramas):** a multiplicidade entre `Curriculo` e `Curso` estava
+> errada (`"1" -- "1"`, sugerindo um único currículo por curso) e foi corrigida para `"*" -- "1"`,
+> já que a secretaria gera um currículo por semestre para o mesmo curso; removida uma relação
+> duplicada entre `Disciplina` e `Matricula`; `Disciplina.setStatus(...)` e
+> `PeriodoMatricula.setAberto(...)` (setters genéricos sem caso de uso correspondente) foram
+> substituídos por `ativar()`/`cancelar()` e `abrir()`/`encerrar()`, alinhados aos nomes usados nos
+> próprios casos de uso (UC13, UC16, UC17); e setters mortos sem nenhuma chamada no código
+> (`Usuario.setNome/setLogin/setSenha`, `Aluno.setCurso`, `Disciplina.setProfessor`,
+> `Curso.setNome/setNumeroCreditos`) foram removidos por não corresponderem a nenhuma
+> funcionalidade modelada.
 
 ## Histórias de Usuário
 
@@ -150,20 +174,60 @@ sistema externo de cobranças.
 - [ ] Disciplinas com 3 ou mais alunos matriculados são marcadas como ativas.
 - [ ] Disciplinas com menos de 3 alunos matriculados são canceladas.
 
+**US15 — Cadastrar funcionário da secretaria**
+> Como funcionário da secretaria, eu quero cadastrar novos funcionários da secretaria, para que
+> outros colegas também possam acessar o sistema com seu próprio login.
+
+- [ ] Cada funcionário cadastrado recebe login e senha para acesso ao sistema.
+
 ## Projeto Java
+
+Protótipo funcional: interface gráfica + persistência em arquivos de texto.
+As regras de negócio das histórias de usuário acima estão implementadas (login, limites de
+matrícula, controle de vagas, ativação/cancelamento de disciplinas ao encerrar o período etc.).
 
 ```
 src/main/java/br/edu/matriculas/
-├── Main.java                     # ponto de entrada
+├── Main.java                     # ponto de entrada: monta o sistema e abre a janela principal
+├── ui/                            # telas Swing: Login, Aluno, Professor e Secretaria
 ├── modelo/                       # entidades de domínio (Usuario, Aluno, Professor, Curso, ...)
-└── servico/                      # SistemaMatriculas (fachada dos casos de uso) e SistemaCobrancas
+├── servico/                      # SistemaMatriculas (fachada dos casos de uso) e SistemaCobrancas
+└── persistencia/                 # RepositorioDados: leitura/escrita do estado em data/*.txt
 ```
 
-Compilar o projeto:
+A interface é uma janela única (`JanelaPrincipal`) que alterna entre telas com `CardLayout`: tela de
+login e, após autenticar, a tela do perfil correspondente (Aluno, Professor ou Secretaria), cada uma
+com os botões das operações daquele perfil — equivalente aos menus da versão em linha de comando,
+porém gráfico.
+
+### Como executar
 
 ```
 mvn compile
+mvn exec:java
 ```
 
 Requisitos: Java 17+ e Maven.
+
+Usuários de teste criados:
+
+| Perfil     | Login        | Senha | Observação |
+|------------|--------------|-------|------------|
+| Secretaria | `secretaria` | `123` | |
+| Professor  | `ada`        | `123` | leciona Algoritmos, Banco de Dados e POO |
+| Professor  | `alan`       | `123` | leciona Redes, IA e Fundamentos de SI |
+| Professor  | `grace`      | `123` | leciona Eng. de Requisitos e Arquitetura de Software |
+| Aluno      | `joao`       | `123` | Ciência da Computação — já matriculado em ALG101, BD201 |
+| Aluno      | `beatriz`    | `123` | Ciência da Computação — já matriculado em ALG101, IA301 |
+| Aluno      | `maria`      | `123` | Engenharia de Software — já matriculada em ES101 |
+| Aluno      | `pedro`      | `123` | Engenharia de Software — já matriculado em ES101, POO102 |
+| Aluno      | `carlos`     | `123` | Sistemas de Informação — já matriculado em SI101 |
+
+### Persistência
+
+Cada tipo de entidade é gravado em um arquivo de texto delimitado por `\|` dentro de `data/`
+(`cursos.txt`, `professores.txt`, `alunos.txt`, `disciplinas.txt`, `funcionarios.txt`,
+`curriculos.txt`, `periodos.txt` e `matriculas.txt`). O estado é salvo automaticamente após cada
+operação de cadastro, matrícula, cancelamento ou abertura/encerramento de período, e recarregado a
+cada execução — a pasta `data/` não é versionada (está no `.gitignore`).
 

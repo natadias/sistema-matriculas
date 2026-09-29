@@ -31,7 +31,11 @@ public class PeriodoMatricula {
         return aberto;
     }
 
-    public void setAberto(boolean aberto) {
-        this.aberto = aberto;
+    public void abrir() {
+        this.aberto = true;
+    }
+
+    public void encerrar() {
+        this.aberto = false;
     }
 }

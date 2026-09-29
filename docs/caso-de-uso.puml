@@ -31,6 +31,8 @@ rectangle "Sistema de Matrículas" {
   usecase "Notificar Sistema\nde Cobranças" as UC15
   usecase "Ativar Disciplina\n(>= 3 matriculados)" as UC16
   usecase "Cancelar Disciplina\n(< 3 matriculados)" as UC17
+
+  usecase "Cadastrar Funcionário\nda Secretaria" as UC18
 }
 
 ' --- Aluno ---
@@ -50,6 +52,7 @@ Secretaria --> UC10
 Secretaria --> UC11
 Secretaria --> UC12
 Secretaria --> UC13
+Secretaria --> UC18
 
 ' --- Login obrigatório para todo caso de uso iniciado por um ator primário ---
 UC02 .> UC01 : <<include>>
@@ -64,6 +67,7 @@ UC10 .> UC01 : <<include>>
 UC11 .> UC01 : <<include>>
 UC12 .> UC01 : <<include>>
 UC13 .> UC01 : <<include>>
+UC18 .> UC01 : <<include>>
 
 ' --- Regras de negócio da matrícula ---
 UC03 .> UC15 : <<include>>

@@ -9,6 +9,7 @@ package "modelo" {
     # login: String
     # senha: String
     + autenticar(senha: String): boolean
+    + getSenha(): String
   }
 
   class Aluno extends Usuario {
@@ -37,6 +38,7 @@ package "modelo" {
     - codigo: String
     - nome: String
     - creditos: int
+    - curso: Curso
     - professor: Professor
     - status: StatusDisciplina
     - matriculas: List<Matricula>
@@ -44,6 +46,9 @@ package "modelo" {
     + {static} MINIMO_PARA_ATIVAR: int = 3
     + temVagasDisponiveis(): boolean
     + getNumeroDeMatriculados(): int
+    + getStatus(): StatusDisciplina
+    + ativar(): void
+    + cancelar(): void
   }
 
   class Curriculo {
@@ -57,6 +62,9 @@ package "modelo" {
     - dataInicio: LocalDate
     - dataFim: LocalDate
     - aberto: boolean
+    + isAberto(): boolean
+    + abrir(): void
+    + encerrar(): void
   }
 
   class Matricula {
@@ -65,6 +73,7 @@ package "modelo" {
     - tipo: TipoMatricula
     - dataMatricula: LocalDate
     - status: StatusMatricula
+    + getStatus(): StatusMatricula
     + cancelar(): void
   }
 
@@ -94,7 +103,11 @@ package "servico" {
     - cursos: List<Curso>
     - disciplinas: List<Disciplina>
     - curriculos: List<Curriculo>
+    - periodos: List<PeriodoMatricula>
+    - periodoAtual: PeriodoMatricula
     - sistemaCobrancas: SistemaCobrancas
+    + {static} MAXIMO_OBRIGATORIAS: int = 4
+    + {static} MAXIMO_OPTATIVAS: int = 2
     + autenticar(login: String, senha: String): Usuario
     + consultarDisciplinasOfertadas(semestre: String): List<Disciplina>
     + matricular(aluno: Aluno, disciplina: Disciplina, tipo: TipoMatricula): Matricula
@@ -105,6 +118,7 @@ package "servico" {
     + cadastrarDisciplina(disciplina: Disciplina): void
     + cadastrarProfessor(professor: Professor): void
     + cadastrarAluno(aluno: Aluno): void
+    + cadastrarFuncionario(funcionario: FuncionarioSecretaria): void
     + definirCurriculo(curriculo: Curriculo): void
     + abrirPeriodoMatricula(periodo: PeriodoMatricula): void
     + encerrarPeriodoMatricula(periodo: PeriodoMatricula): void
@@ -118,21 +132,31 @@ package "servico" {
   class SistemaCobrancasImpl implements SistemaCobrancas
 }
 
+package "persistencia" {
+
+  class RepositorioDados {
+    - diretorio: Path
+    + salvar(sistema: SistemaMatriculas): void
+    + carregar(sistema: SistemaMatriculas): void
+  }
+}
+
 SistemaMatriculas "1" o-- "*" Aluno
 SistemaMatriculas "1" o-- "*" Professor
 SistemaMatriculas "1" o-- "*" FuncionarioSecretaria
 SistemaMatriculas "1" o-- "*" Curso
 SistemaMatriculas "1" o-- "*" Disciplina
 SistemaMatriculas "1" o-- "*" Curriculo
+SistemaMatriculas "1" o-- "*" PeriodoMatricula
 SistemaMatriculas --> SistemaCobrancas
+RepositorioDados ..> SistemaMatriculas : <<use>>
 
 Curso "1" *-- "*" Disciplina
-Curriculo "1" -- "1" Curso
+Curriculo "*" -- "1" Curso
 Curriculo "1" o-- "*" Disciplina
 Professor "1" -- "*" Disciplina : leciona
 Disciplina "1" *-- "*" Matricula
 Aluno "1" *-- "*" Matricula
-Matricula "*" -- "1" Disciplina
 Matricula --> TipoMatricula
 Matricula --> StatusMatricula
 Disciplina --> StatusDisciplina

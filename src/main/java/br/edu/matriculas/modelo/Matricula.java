@@ -18,8 +18,7 @@ public class Matricula {
     }
 
     public void cancelar() {
-        // TODO: marcar status como CANCELADA
-        throw new UnsupportedOperationException("TODO");
+        this.status = StatusMatricula.CANCELADA;
     }
 
     public Aluno getAluno() {
@@ -40,9 +39,5 @@ public class Matricula {
 
     public StatusMatricula getStatus() {
         return status;
-    }
-
-    public void setStatus(StatusMatricula status) {
-        this.status = status;
     }
 }

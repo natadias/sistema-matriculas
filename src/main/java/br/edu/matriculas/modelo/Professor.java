@@ -20,4 +20,9 @@ public class Professor extends Usuario {
     public List<Disciplina> getDisciplinasLecionadas() {
         return disciplinasLecionadas;
     }
+
+    @Override
+    public String toString() {
+        return nome + " (" + registroFuncional + ")";
+    }
 }
